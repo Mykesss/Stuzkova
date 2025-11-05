@@ -1,301 +1,106 @@
 <!doctype html>
 <html lang="sk">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Stužková — video</title>
-  <style>
-    :root{
-      --bg-top: #0e0a0a;
-      --bg-bottom: #07121a;
-      --wrap-shadow: 0 20px 60px rgba(0,0,0,.65);
-      --play-bg: rgba(255,255,255,.06);
-      --accent-size: 18px;
-      --accent-blur: 28px;
-      --ring-opacity: 0.06;
-      --ring-scale: 1.06;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title></title>
+  <meta name="theme-color" content="#05060a">
+<style>
+  /* Force a totally clean viewport: hide anything accidentally outside .container */
+  html,body{height:100%;margin:0;padding:0;overflow:hidden;background:#05060a;font-family:system-ui,-apple-system,Segoe UI,Roboto;color:#fff}
+  body > *:not(.container){display:none !important;}
 
-    html,body{
-      height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto;
-      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
-      display:flex;align-items:center;justify-content:center;padding:28px;color:#ddd;
-    }
+  /* Centered area */
+  .container{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    padding:24px;
+    background:linear-gradient(180deg,#07121a 0%, #05060a 100%);
+  }
 
-    .page { position:relative; width:100%; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .player{
+    width:min(1100px,96vw);
+    aspect-ratio:16/9;
+    max-height:86vh;
+    position:relative;
+    border-radius:12px;
+    overflow:hidden;
+    background:#000;
+    box-shadow:0 30px 80px rgba(0,0,0,.6);
+  }
 
-    .wrap{
-      position:relative;
-      z-index:3;
-      width:100%;
-      max-width:1100px;
-      border-radius:14px;
-      overflow:visible;
-      box-shadow: var(--wrap-shadow);
-      transform-origin:center;
-      opacity:0;
-      transform: translateY(12px) scale(.985);
-      animation: enter 450ms cubic-bezier(.2,.9,.3,1) forwards;
-    }
+  .player iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
 
-    @keyframes enter {
-      to { opacity:1; transform: translateY(0) scale(1); }
-    }
+  /* Full opaque overlay that hides Vimeo UI — only our button visible */
+  .overlay{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    z-index:6;background:rgba(0,0,0,0.94);
+  }
 
-    .video-box{
-      position:relative;
-      background:#000;
-      border-radius:10px;
-      overflow:visible;
-      margin:10px;
-      z-index:2;
-    }
-
-    .video-box::after{
-      content:"";
-      position:absolute;
-      left: calc(-1 * var(--accent-size));
-      top: calc(-1 * var(--accent-size));
-      right: calc(-1 * var(--accent-size));
-      bottom: calc(-1 * var(--accent-size));
-      border-radius: calc(10px + var(--accent-size));
-      background: rgba(0,0,0,0.55);
-      filter: blur(20px);
-      z-index:0;
-      pointer-events:none;
-    }
-
-    .video-box::before{
-      content: "";
-      position: absolute;
-      left: -8px; top: -8px; right: -8px; bottom: -8px;
-      border-radius: 14px;
-      pointer-events: none;
-      background: radial-gradient(ellipse at center,
-        rgba(255,255,255,var(--ring-opacity)) 0%,
-        rgba(255,255,255,0) 45%);
-      filter: blur(8px);
-      transform: scale(1);
-      opacity: 1;
-      z-index:1;
-      animation: ring-pulse 3.2s ease-in-out infinite;
-      mix-blend-mode: screen;
-    }
-    @keyframes ring-pulse {
-      0%   { transform: scale(1);           opacity: 1; }
-      50%  { transform: scale(var(--ring-scale)); opacity: 0.36; }
-      100% { transform: scale(1);           opacity: 1; }
-    }
-
-    .video-box .chromatic-left,
-    .video-box .chromatic-right {
-      pointer-events:none;
-      position:absolute;
-      inset: 0;
-      border-radius:10px;
-      z-index:1;
-      mix-blend-mode:screen;
-      opacity: .22;
-      filter: blur(var(--accent-blur));
-    }
-    .video-box .chromatic-left{
-      background: linear-gradient(90deg, rgba(255,60,90,.9), rgba(255,60,90,0.02));
-      transform: translateX(-10px);
-      animation: chroma-move-left 5.5s ease-in-out infinite;
-    }
-    .video-box .chromatic-right{
-      background: linear-gradient(270deg, rgba(70,240,220,.9), rgba(70,240,220,0.02));
-      transform: translateX(10px);
-      animation: chroma-move-right 5.5s ease-in-out infinite;
-    }
-    @keyframes chroma-move-left {
-      0% { transform: translateX(-12px) scale(1); opacity:.22 }
-      50% { transform: translateX(-6px) scale(1.02); opacity:.14 }
-      100% { transform: translateX(-12px) scale(1); opacity:.22 }
-    }
-    @keyframes chroma-move-right {
-      0% { transform: translateX(12px) scale(1); opacity:.22 }
-      50% { transform: translateX(6px) scale(1.02); opacity:.14 }
-      100% { transform: translateX(12px) scale(1); opacity:.22 }
-    }
-
-    video{
-      display:block;
-      width:100%;
-      height:auto;
-      border-radius:8px;
-      z-index:3;
-      position:relative;
-      background:#000;
-    }
-
-    /* overlay: propúšťa kliky mimo tlačidla; stredné tlačidlo má pointer-events:auto */
-    #overlay{
-      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      background: linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.14));
-      cursor:default; z-index:5;
-      transition: background .18s ease;
-      pointer-events: none; /* prepúšťa kliky mimo stredného tlačidla */
-    }
-    #overlay.visible{ display:flex; }
-
-    .play-icon{
-      position:relative; width:110px; height:110px; border-radius:999px; background:var(--play-bg);
-      display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(0,0,0,.5);
-      backdrop-filter: blur(6px);
-      transition: transform .18s ease, box-shadow .18s ease, opacity .14s ease;
-      pointer-events: auto; /* iba toto tlačidlo prijíma kliky */
-      cursor: pointer;
-      opacity:1;
-    }
-    .play-icon.hidden{ opacity:0; transform: scale(.98); pointer-events:none; }
-
-    .play-icon:focus { outline: 3px solid rgba(255,255,255,0.06); outline-offset:4px }
-    #overlay:hover .play-icon { transform: scale(1.05); box-shadow: 0 18px 48px rgba(0,0,0,.55); }
-
-    .play-icon svg{ width:52px; height:52px; fill:#fff; opacity:0.98; }
-
-    @media (prefers-reduced-motion: reduce) {
-      .wrap { animation: none; opacity:1; transform:none; }
-      .video-box::before { animation: none; }
-      .video-box .chromatic-left,
-      .video-box .chromatic-right { animation:none; opacity:.12 }
-    }
-
-    @media (max-width:600px){
-      .play-icon{ width:86px; height:86px }
-      .play-icon svg{ width:36px; height:36px }
-    }
-  </style>
+  .btn{
+    width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.06);
+    border:2px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;backdrop-filter:blur(4px);
+  }
+  .btn:hover{transform:scale(1.04)}
+  .tri{width:56px;height:56px;clip-path:polygon(0 0,100% 50%,0 100%);background:#fff;margin-left:6px}
+  @media(max-width:600px){.btn{width:110px;height:110px}.tri{width:44px;height:44px}}
+</style>
 </head>
 <body>
-  <div class="page">
-    <div class="wrap" aria-hidden="false">
-      <div class="video-box" aria-hidden="false">
-        <div class="chromatic-left" aria-hidden="true"></div>
-        <div class="chromatic-right" aria-hidden="true"></div>
+  <div class="container">
+    <div class="player" role="region" aria-label="Video prehrávač">
+      <!-- Vimeo embed: hide byline/title/portrait/badge; autoplay OFF -->
+      <iframe id="vframe"
+        src="https://player.vimeo.com/video/1133838050?badge=0&title=0&byline=0&portrait=0&autopause=0&player_id=0&app_id=58479"
+        allow="autoplay; fullscreen; picture-in-picture; encrypted-media; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        title="Stuzkova"
+        allowfullscreen
+      ></iframe>
 
-        <video id="player" controls playsinline preload="metadata" poster="">
-          <source src="https://pouch.jumpshare.com/preview/ArgzfZhfaJMdof1Jc1UcRhwpsIwkDSTUeghtGHMLtJydyiEwRkXCDUePPBxXxZHucr2GrDUb8DXIwhZoEmWkyuGFUjjXxU3Y-Nqgu6RJ03qn7u_dBa_X71yvRS_3yxV_TMjU43D-y_VT4-w6V_W7AW6yjbN-I2pg_cnoHs_AmgI.mp4" type="video/mp4">
-          Tvoj prehliadač nepodporuje video tag.
-        </video>
-
-        <div id="overlay" role="presentation" aria-hidden="false">
-          <div class="play-icon" id="playBtn" role="button" tabindex="0" aria-label="Prehrať video">
-            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M16 12v40l36-20L16 12z"/>
-            </svg>
-          </div>
-        </div>
+      <div class="overlay" id="overlay" aria-hidden="false">
+        <button id="play" class="btn" aria-label="Prehrať video (kliknutím odmutujete)">
+          <span class="tri" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
   </div>
 
-  <script>
-    const player = document.getElementById('player');
-    const overlay = document.getElementById('overlay');
-    const playBtn = document.getElementById('playBtn');
+<script src="https://player.vimeo.com/api/player.js"></script>
+<script>
+(function(){
+  const iframe = document.getElementById('vframe');
+  const overlay = document.getElementById('overlay');
+  const btn = document.getElementById('play');
+  const player = new Vimeo.Player(iframe);
 
-    // flags
-    let suppressAutoPlay = false;
-    let manualPlay = false;
+  // Ensure paused & silent initially (defensive)
+  player.ready().then(()=>{
+    player.getPaused().then(paused=>{ if(!paused) player.pause().catch(()=>{}); }).catch(()=>{});
+    player.setVolume(0).catch(()=>{});
+  }).catch(()=>{});
 
-    // interaction trackers
-    let lastInteraction = { time: 0, wasPlaying: false }; // updated on pointerdown/click inside video area
-    let wasPlayingOnPointerDown = false;
-
-    function showOverlay(){ overlay.style.display = 'flex'; overlay.classList.add('visible'); playBtn.classList.remove('hidden'); }
-    function hideOverlay(){ overlay.style.display = 'none'; overlay.classList.remove('visible'); playBtn.classList.add('hidden'); }
-
-    // initial: show overlay
-    showOverlay();
-
-    function suppressFor(ms=350){
-      suppressAutoPlay = true;
-      setTimeout(()=>{ suppressAutoPlay = false; }, ms);
+  async function activate(){
+    overlay.style.display = 'none';
+    try {
+      await player.setVolume(1);
+      await player.play();
+      iframe.focus();
+    } catch(e){
+      overlay.style.display = '';
+      console.warn('Play failed:', e);
     }
+  }
 
-    // record interactions: pointerdown and click to catch both drag & single-click cases
-    function recordInteraction(ev){
-      const rect = player.getBoundingClientRect();
-      const x = ev.clientX, y = ev.clientY;
-      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-        lastInteraction.time = Date.now();
-        lastInteraction.wasPlaying = !player.paused;
-        wasPlayingOnPointerDown = !player.paused;
-      }
-    }
-    document.addEventListener('pointerdown', recordInteraction, {passive:true});
-    document.addEventListener('click', recordInteraction, {passive:true});
+  btn.addEventListener('click', activate);
+  btn.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); activate(); }});
 
-    // central play button
-    playBtn.addEventListener('click', async () => {
-      manualPlay = true;
-      try { player.muted = false; } catch(e){}
-      try { await player.play(); } catch(e){ console.warn('Play blocked:', e); }
-      manualPlay = false;
-      hideOverlay();
-    });
-
-    playBtn.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); playBtn.click(); }
-    });
-
-    // seeking flags
-    let userSeeking = false;
-
-    player.addEventListener('seeking', () => { userSeeking = true; });
-
-    player.addEventListener('seeked', async () => {
-      userSeeking = false;
-      const recent = (Date.now() - lastInteraction.time) < 1500;
-      // resume if it was playing on pointerdown OR recent interaction inside video and it was playing
-      if (wasPlayingOnPointerDown || (recent && lastInteraction.wasPlaying)) {
-        try { await player.play(); hideOverlay(); } catch(e){ console.warn('Play after seek blocked:', e); }
-      }
-      // reset
-      wasPlayingOnPointerDown = false;
-    });
-
-    // play handler - protect against accidental auto-resume
-    player.addEventListener('play', () => {
-      if (suppressAutoPlay && !manualPlay && !userSeeking) {
-        try { player.pause(); } catch(e){}
-        suppressAutoPlay = false;
-        showOverlay();
-        return;
-      }
-      hideOverlay();
-    });
-
-    player.addEventListener('pause', () => {
-      showOverlay();
-      suppressFor(350);
-    });
-    player.addEventListener('ended', () => {
-      showOverlay();
-      suppressFor(350);
-    });
-
-    // clicking the video toggles play/pause
-    player.addEventListener('click', async () => {
-      if (player.paused) {
-        manualPlay = true;
-        try { player.muted = false; } catch(e){}
-        try { await player.play(); } catch(e){ console.warn('Play blocked:', e); }
-        manualPlay = false;
-        hideOverlay();
-      } else {
-        try { player.pause(); } catch(e){}
-      }
-    });
-
-    // also remember pointerdown directly on video element
-    player.addEventListener('pointerdown', () => {
-      if (!player.paused) wasPlayingOnPointerDown = true;
-    });
-  </script>
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) activate(); });
+})();
+</script>
 </body>
 </html>
-
-
